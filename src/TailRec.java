@@ -30,15 +30,8 @@ public sealed interface TailRec<A> {
             case FlatMap(y, g) => run(y.flatMap(g(_) flatMap f))
     }
      */
-    static  <A> A run(TailRec<A> t) {
-        return switch (t) {
-            case Return<A> r -> r.a();
-            case Suspend<A> s  -> run(s.resume().get());
-            case FlatMap<?, A> fm -> run(bind(fm));
-        };
-    }
 
-    static <A> A runIter(TailRec<A> t) {
+    static <A> A runTrampoline(TailRec<A> t) {
         while (!(t instanceof Return<A> r)) {
             t = switch (t) {
                 case Suspend<A> s  -> s.resume().get();
@@ -53,11 +46,11 @@ public sealed interface TailRec<A> {
         return switch (fm.sub()) {
             case Return<A> r -> fm.k().apply(r.a());
             case Suspend<A> s -> new FlatMap<>(s.resume().get(), fm.k());
-            case FlatMap<?, A> fm2 ->  combine(fm2, fm);
+            case FlatMap<?, A> fm2 ->  associativity(fm2, fm);
         };
     }
 
-    static <A,B,C> TailRec<B> combine(FlatMap<A,C> fm, FlatMap<C,B> fm2) {
+    static <A,B,C> TailRec<B> associativity(FlatMap<A,C> fm, FlatMap<C,B> fm2) {
         return fm.sub().flatMap(a -> fm.k().apply(a).flatMap(c -> fm2.k().apply(c)));
-    } // (TailRec<A>)
+    }
 }
