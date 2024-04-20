@@ -19,7 +19,13 @@ public class Factorial {
         return TailRec.run(fact(n));
     }
 
+    static int safeFactorialIter(int n) {
+        return TailRec.runIter(fact(n));
+    }
+
     public static void main(String[] args) {
-        System.out.println(safeFactorial(5));
+        System.out.println(unsafeFactorial(10));
+        System.out.println(safeFactorial(10));
+        System.out.println(safeFactorialIter(10));
     }
 }

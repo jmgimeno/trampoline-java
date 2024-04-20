@@ -38,6 +38,17 @@ public sealed interface TailRec<A> {
         };
     }
 
+    static <A> A runIter(TailRec<A> t) {
+        while (!(t instanceof Return<A> r)) {
+            t = switch (t) {
+                case Suspend<A> s  -> s.resume().get();
+                case FlatMap<?, A> fm -> bind(fm);
+                default -> throw new IllegalStateException();
+            };
+        }
+        return r.a();
+    }
+
     static <A, B> TailRec<B> bind(FlatMap<A, B> fm) {
         return switch (fm.sub()) {
             case Return<A> r -> fm.k().apply(r.a());
