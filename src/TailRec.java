@@ -1,6 +1,19 @@
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+/*
+sealed trait TailRec[A] {
+  def map[B](f: A => B): TailRec[B] = flatMap(f andThen (Return(_)))
+  def flatMap[B](f: A => TailRec[B]): TailRec[B] = FlatMap(this, f)
+}
+
+final case class Return[A](a: A) extends TailRec[A]
+final case class Suspend[A](resume: () => TailRec[A]) extends TailRec[A]
+final case class FlatMap[A, B](sub: TailRec[A], k: A => TailRec[B]) extends TailRec[B]
+ */
 public sealed interface TailRec<A> {
 
     default <B> TailRec<B> flatMap(Function<A, TailRec<B>> function) {
@@ -63,4 +76,28 @@ public sealed interface TailRec<A> {
     static <A, C, D> TailRec<A> associativity(TailRec<D> sub0, Function<D, TailRec<C>> k0, Function<C, TailRec<A>> k) {
         return sub0.flatMap(c -> k0.apply(c).flatMap(k));
     }
+
+    /*
+    def sequence[A](ltt: List[TailRec[A]]): TailRec[List[A]] =
+        ltt.reverse.foldLeft(Return(Nil): TailRec[List[A]]) { (tla, ta) =>
+            ta map ((_: A) :: (_: List[A])).curried flatMap tla.map
+    */
+    static <A> TailRec<List<A>> sequence(List<TailRec<A>> trs) {
+        return trs.stream().reduce(
+                (TailRec<List<A>>) new Return<List<A>>(new ArrayList<>()),
+                (result, tr) ->
+                        tr.flatMap(a -> result.map(as -> {
+                            var cp = new ArrayList<>(as);
+                            cp.add(a);
+                            return cp;
+                        })),
+                (res1, res2) ->
+                        res1.flatMap(as1 -> res2.map(as2 -> {
+                            var cp = new ArrayList<>(as1);
+                            cp.addAll(as2);
+                            return cp;
+                        })));
+    }
 }
+
+
