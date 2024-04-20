@@ -29,7 +29,7 @@ public sealed interface TailRec<A> {
             case Suspend(r) => run(FlatMap(r(), f))
             case FlatMap(y, g) => run(y.flatMap(g(_) flatMap f))
     }
-     */
+   */
 
     static <A> A runTrampoline(TailRec<A> t) {
         while (!(t instanceof Return(var a))) {
@@ -47,20 +47,20 @@ public sealed interface TailRec<A> {
         return bind(fm.sub(), fm.k());
     }
 
-    static <A, B> TailRec<B> bind(TailRec<A> sub, Function<A, TailRec<B>> k) {
+    static <A, C> TailRec<A> bind(TailRec<C> sub, Function<C, TailRec<A>> k) {
         return switch (sub) {
-            case Return(var a) -> k.apply(a);
+            case Return(var c) -> k.apply(c);
             case Suspend(var resume) -> new FlatMap<>(resume.get(), k);
-            case FlatMap<?, A> fm0 -> associativity(fm0, k);
+            case FlatMap<?, C> fm0 -> associativity(fm0, k);
         };
     }
 
-    static <A, B, C> TailRec<B> associativity(FlatMap<C, A> fm0, Function<A, TailRec<B>> k) {
-        // to capture the existential type C
+    static <A, C, D> TailRec<A> associativity(FlatMap<D, C> fm0, Function<C, TailRec<A>> k) {
+        // to capture the existential type D
         return associativity(fm0.sub(), fm0.k(), k);
     }
 
-    static <A, B, C> TailRec<B> associativity(TailRec<C> sub0, Function<C, TailRec<A>> k0, Function<A, TailRec<B>> k) {
+    static <A, C, D> TailRec<A> associativity(TailRec<D> sub0, Function<D, TailRec<C>> k0, Function<C, TailRec<A>> k) {
         return sub0.flatMap(c -> k0.apply(c).flatMap(k));
     }
 }
