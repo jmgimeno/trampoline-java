@@ -87,15 +87,13 @@ public sealed interface TailRec<A> {
                 (TailRec<List<A>>) new Return<List<A>>(new ArrayList<>()),
                 (result, tr) ->
                         tr.flatMap(a -> result.map(as -> {
-                            var cp = new ArrayList<>(as);
-                            cp.add(a);
-                            return cp;
+                            as.add(a);
+                            return as;
                         })),
                 (res1, res2) ->
                         res1.flatMap(as1 -> res2.map(as2 -> {
-                            var cp = new ArrayList<>(as1);
-                            cp.addAll(as2);
-                            return cp;
+                            as1.addAll(as2);
+                            return as1;
                         })));
     }
 }
