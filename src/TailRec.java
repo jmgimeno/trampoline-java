@@ -1,13 +1,12 @@
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
 /*
 sealed trait TailRec[A] {
-  def map[B](f: A => B): TailRec[B] = flatMap(f andThen (Return(_)))
-  def flatMap[B](f: A => TailRec[B]): TailRec[B] = FlatMap(this, f)
+    def map[B](f: A => B): TailRec[B] = flatMap(f andThen (Return(_)))
+    def flatMap[B](f: A => TailRec[B]): TailRec[B] = FlatMap(this, f)
 }
 
 final case class Return[A](a: A) extends TailRec[A]
@@ -82,19 +81,17 @@ public sealed interface TailRec<A> {
         ltt.reverse.foldLeft(Return(Nil): TailRec[List[A]]) { (tla, ta) =>
             ta map ((_: A) :: (_: List[A])).curried flatMap tla.map
     */
+
     static <A> TailRec<List<A>> sequence(List<TailRec<A>> trs) {
-        return trs.stream().reduce(
-                (TailRec<List<A>>) new Return<List<A>>(new ArrayList<>()),
-                (result, tr) ->
-                        tr.flatMap(a -> result.map(as -> {
-                            as.add(a);
-                            return as;
-                        })),
-                (res1, res2) ->
-                        res1.flatMap(as1 -> res2.map(as2 -> {
-                            as1.addAll(as2);
-                            return as1;
-                        })));
+        TailRec<List<A>> result = new Return<>(new ArrayList<>());
+        for (TailRec<A> tr : trs) {
+            final var r = result;
+            result = tr.flatMap(a -> r.map(as -> {
+                as.add(a);
+                return as;
+            }));
+        }
+        return result;
     }
 }
 
